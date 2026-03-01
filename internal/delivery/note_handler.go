@@ -3,6 +3,7 @@ package delivery
 import (
 	"net/http"
 	"notes-project/internal/usecase"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,4 +46,25 @@ func (h *NoteHandler) GetAllNotes(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, notes)
+}
+
+func (h *NoteHandler) DeleteNote(c *gin.Context) {
+	// Mengambil ID dari URL parameter /notes/:id
+	idParam := c.Param("id")
+	id, _ := strconv.Atoi(idParam)
+
+	err := h.usecase.DeleteNote(uint(id))
+	if err != nil {
+
+		if err.Error() == "catatan tidak ditemukan" {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Catatan berhasil dihapus"})
+
 }

@@ -9,6 +9,7 @@ import (
 type NoteRepository interface {
 	Create(note *models.Note) error
 	GetAllNote() ([]models.Note, error)
+	Delete(id uint) error
 }
 
 type noteRepository struct {
@@ -28,4 +29,20 @@ func (r *noteRepository) GetAllNote() ([]models.Note, error) {
 	var notes []models.Note
 	err := r.db.Find(&notes).Error
 	return notes, err
+}
+
+func (r *noteRepository) Delete(id uint) error {
+	result := r.db.Delete(&models.Note{}, id)
+
+	// Cek Jika terjadi error koneksi/query
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Jika tidak ada baris yang terhapus (ID tidak ketemu)
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound // Error bawaan GORM untuk "Data Tidak Ditemukan"
+	}
+
+	return nil
 }

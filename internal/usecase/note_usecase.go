@@ -5,12 +5,15 @@ import (
 	"notes-project/internal/models"
 	"notes-project/internal/repository"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // interface untuk kontrak logika bisnis
 type NoteUsecase interface {
 	GetAllNotes() ([]models.Note, error)
 	CreateNote(title, content string) (*models.Note, error)
+	DeleteNote(id uint) error
 }
 
 type noteUsecase struct {
@@ -49,4 +52,23 @@ func (u *noteUsecase) CreateNote(title, content string) (*models.Note, error) {
 
 func (u *noteUsecase) GetAllNotes() ([]models.Note, error) {
 	return u.repo.GetAllNote()
+}
+
+func (u *noteUsecase) DeleteNote(id uint) error {
+	// Validasi Sederhana: Pastikan ID tidak nol
+	if id == 0 {
+		return errors.New("ID catatan tidak valid")
+	}
+
+	err := u.repo.Delete(id)
+	if err != nil {
+		// jika errornya adalah recordnotFound, kita berikan pesan spesifik
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("catatan tidak ditemukan")
+		}
+
+		return err
+	}
+
+	return u.repo.Delete(id)
 }
