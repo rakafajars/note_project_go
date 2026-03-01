@@ -18,7 +18,7 @@ type noteUsecase struct {
 }
 
 // constructor untuk menyutikann (inject) repository ke usecase
-func NewNoteRepository(r repository.NoteRepository) NoteUsecase {
+func NewTodoUsecase(r repository.NoteRepository) NoteUsecase {
 	return &noteUsecase{repo: r}
 }
 
