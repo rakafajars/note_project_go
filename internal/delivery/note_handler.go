@@ -58,7 +58,7 @@ func (h *NoteHandler) CreateNote(c *gin.Context) {
 			// logika untuk mempercantik pesan
 			switch tag {
 			case "min":
-				message = err.Field() + " minimal" + param + " karakter"
+				message = err.Field() + " minimal " + param + " karakter"
 			case "required":
 				message = err.Field() + " wajib diisi"
 			case "max":
@@ -94,13 +94,27 @@ func (h *NoteHandler) CreateNote(c *gin.Context) {
 // @Failure      500  {object}  Response
 // @Router       /notes [get]
 func (h *NoteHandler) GetAllNotes(c *gin.Context) {
-	notes, err := h.usecase.GetAllNotes()
+	// ambil query params
+
+	query := c.Query("q")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	// panggil use case
+	notes, total, err := h.usecase.GetAllNotes(query, page, limit)
 	if err != nil {
 		ErrorResponse(c, "Gagal memuat catatan", http.StatusInternalServerError, "error", gin.H{"details": err.Error()})
 		return
 	}
 
-	SuccessResponse(c, "Berhasil mendapatkan catatan", http.StatusOK, "success", notes, nil)
+	// 3. susu meta data pagination
+	meta := gin.H{
+		"current_page": page,
+		"limit":        limit,
+		"total":        total,
+	}
+
+	SuccessResponse(c, "Berhasil mendapatkan catatan", http.StatusOK, "success", notes, meta)
 
 }
 

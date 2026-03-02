@@ -11,7 +11,7 @@ import (
 
 // interface untuk kontrak logika bisnis
 type NoteUsecase interface {
-	GetAllNotes() ([]models.Note, error)
+	GetAllNotes(query string, page, limit int) ([]models.Note, int64, error)
 	CreateNote(title, content string) (*models.Note, error)
 	DeleteNote(id uint) error
 	UpdateNote(id uint, title, content string) (*models.Note, error)
@@ -51,8 +51,20 @@ func (u *noteUsecase) CreateNote(title, content string) (*models.Note, error) {
 	return note, nil
 }
 
-func (u *noteUsecase) GetAllNotes() ([]models.Note, error) {
-	return u.repo.GetAllNote()
+func (u *noteUsecase) GetAllNotes(query string, page, limit int) ([]models.Note, int64, error) {
+	// default nilai jika tidak di isi
+	if page <= 0 {
+		page = 1
+	}
+
+	if limit <= 0 {
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+
+	return u.repo.GetAll(query, limit, offset)
+	// return u.repo.GetAll()
 }
 
 func (u *noteUsecase) DeleteNote(id uint) error {

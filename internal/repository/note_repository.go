@@ -8,7 +8,7 @@ import (
 
 type NoteRepository interface {
 	Create(note *models.Note) error
-	GetAllNote() ([]models.Note, error)
+	GetAll(query string, limit, offset int) ([]models.Note, int64, error)
 	Delete(id uint) error
 	Update(id uint, note *models.Note) error
 }
@@ -26,10 +26,20 @@ func (r *noteRepository) Create(note *models.Note) error {
 	return r.db.Create(note).Error
 }
 
-func (r *noteRepository) GetAllNote() ([]models.Note, error) {
+func (r *noteRepository) GetAll(query string, limit, offset int) ([]models.Note, int64, error) {
 	var notes []models.Note
-	err := r.db.Find(&notes).Error
-	return notes, err
+	var total int64
+
+	db := r.db.Model(&models.Note{})
+
+	if query != "" {
+		db = db.Where("title ILIKE ?", "%"+query+"%")
+	}
+
+	db.Count(&total)
+
+	err := db.Limit(limit).Offset(offset).Find(&notes).Error
+	return notes, total, err
 }
 
 func (r *noteRepository) Delete(id uint) error {
