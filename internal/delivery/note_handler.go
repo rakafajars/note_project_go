@@ -65,5 +65,4 @@ func (h *NoteHandler) DeleteNote(c *gin.Context) {
 	}
 
 	SuccessResponse(c, "Catatan Berhasil dihapus", http.StatusOK, "success", nil, nil)
-
 }
