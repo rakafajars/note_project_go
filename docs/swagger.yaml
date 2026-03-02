@@ -1,0 +1,132 @@
+basePath: /api/v1
+definitions:
+  delivery.NoteRequest:
+    properties:
+      content:
+        type: string
+      title:
+        type: string
+    type: object
+  delivery.Response:
+    properties:
+      data: {}
+      errors:
+        description: Gunakan any agar lebih fleksibel
+      message:
+        type: string
+      meta:
+        description: Tambahkan Meta di struct
+      status:
+        type: string
+      status_code:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Ini adalah server API untuk aplikasi catatan (Notes).
+  title: Notes API
+  version: "1.0"
+paths:
+  /notes:
+    get:
+      description: Mengambil semua data catatan dari database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.Response'
+      summary: Mendapatkan semua catatan
+      tags:
+      - notes
+    post:
+      consumes:
+      - application/json
+      description: Menyimpan judul catatan ke database
+      parameters:
+      - description: Note Data
+        in: body
+        name: note
+        required: true
+        schema:
+          $ref: '#/definitions/delivery.NoteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/delivery.Response'
+      summary: Membuat catatan baru
+      tags:
+      - notes
+  /notes/{id}:
+    delete:
+      description: Menghapus data berdasarkan ID
+      parameters:
+      - description: Note ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/delivery.Response'
+      summary: Menghapus catatan
+      tags:
+      - notes
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui judul dan isi catatan berdasarkan ID
+      parameters:
+      - description: Note ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Note Data
+        in: body
+        name: note
+        required: true
+        schema:
+          $ref: '#/definitions/delivery.NoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.Response'
+      summary: Memperbarui catatan
+      tags:
+      - notes
+swagger: "2.0"
