@@ -26,6 +26,7 @@ func main() {
 	{
 		v1.POST("/notes", noteHandler.CreateNote)
 		v1.GET("/notes", noteHandler.GetAllNotes)
+		v1.DELETE("/notes/:id", noteHandler.DeleteNote)
 	}
 
 	// 4. Jalankan Server

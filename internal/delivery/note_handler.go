@@ -24,47 +24,46 @@ func (h *NoteHandler) CreateNote(c *gin.Context) {
 
 	// Bind JSON dari body request ke struct input
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		APIResponse(c, "Validasi gagal", http.StatusBadRequest, "error", gin.H{"details": err.Error()})
 		return
 	}
 
 	note, err := h.usecase.CreateNote(input.Title, input.Content)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		APIResponse(c, "Gagal membuat catatan", http.StatusInternalServerError, "error", gin.H{"details": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, note)
+	APIResponse(c, "Catatan berhasil dibuat", http.StatusCreated, "success", note)
 
 }
 
 func (h *NoteHandler) GetAllNotes(c *gin.Context) {
 	notes, err := h.usecase.GetAllNotes()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		APIResponse(c, "Gagal memuat catatan", http.StatusInternalServerError, "error", gin.H{"details": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, notes)
+	APIResponse(c, "Berhasil mendapatkan catatan", http.StatusOK, "success", notes)
+
 }
 
 func (h *NoteHandler) DeleteNote(c *gin.Context) {
 	// Mengambil ID dari URL parameter /notes/:id
 	idParam := c.Param("id")
-	id, _ := strconv.Atoi(idParam)
+	id, _ := strconv.Atoi(idParam) // Convert string ke int
 
 	err := h.usecase.DeleteNote(uint(id))
 	if err != nil {
-
 		if err.Error() == "catatan tidak ditemukan" {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			APIResponse(c, err.Error(), http.StatusNotFound, "error", nil)
 			return
 		}
-
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		APIResponse(c, "Terjadi kesalahan server", http.StatusInternalServerError, "error", nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Catatan berhasil dihapus"})
+	APIResponse(c, "Catatan Berhasil dihapus", http.StatusOK, "success", nil)
 
 }

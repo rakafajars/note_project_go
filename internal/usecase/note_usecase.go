@@ -70,5 +70,5 @@ func (u *noteUsecase) DeleteNote(id uint) error {
 		return err
 	}
 
-	return u.repo.Delete(id)
+	return nil
 }
