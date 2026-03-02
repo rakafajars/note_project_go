@@ -24,28 +24,28 @@ func (h *NoteHandler) CreateNote(c *gin.Context) {
 
 	// Bind JSON dari body request ke struct input
 	if err := c.ShouldBindJSON(&input); err != nil {
-		APIResponse(c, "Validasi gagal", http.StatusBadRequest, "error", gin.H{"details": err.Error()})
+		ErrorResponse(c, "Validasi gagal", http.StatusBadRequest, "error", gin.H{"details": err.Error()})
 		return
 	}
 
 	note, err := h.usecase.CreateNote(input.Title, input.Content)
 	if err != nil {
-		APIResponse(c, "Gagal membuat catatan", http.StatusInternalServerError, "error", gin.H{"details": err.Error()})
+		ErrorResponse(c, "Gagal membuat catatan", http.StatusInternalServerError, "error", gin.H{"details": err.Error()})
 		return
 	}
 
-	APIResponse(c, "Catatan berhasil dibuat", http.StatusCreated, "success", note)
+	SuccessResponse(c, "Catatan berhasil dibuat", http.StatusCreated, "success", note, nil)
 
 }
 
 func (h *NoteHandler) GetAllNotes(c *gin.Context) {
 	notes, err := h.usecase.GetAllNotes()
 	if err != nil {
-		APIResponse(c, "Gagal memuat catatan", http.StatusInternalServerError, "error", gin.H{"details": err.Error()})
+		ErrorResponse(c, "Gagal memuat catatan", http.StatusInternalServerError, "error", gin.H{"details": err.Error()})
 		return
 	}
 
-	APIResponse(c, "Berhasil mendapatkan catatan", http.StatusOK, "success", notes)
+	SuccessResponse(c, "Berhasil mendapatkan catatan", http.StatusOK, "success", notes, nil)
 
 }
 
@@ -57,13 +57,13 @@ func (h *NoteHandler) DeleteNote(c *gin.Context) {
 	err := h.usecase.DeleteNote(uint(id))
 	if err != nil {
 		if err.Error() == "catatan tidak ditemukan" {
-			APIResponse(c, err.Error(), http.StatusNotFound, "error", nil)
+			ErrorResponse(c, err.Error(), http.StatusNotFound, "error", nil)
 			return
 		}
-		APIResponse(c, "Terjadi kesalahan server", http.StatusInternalServerError, "error", nil)
+		ErrorResponse(c, "Terjadi kesalahan server", http.StatusInternalServerError, "error", nil)
 		return
 	}
 
-	APIResponse(c, "Catatan Berhasil dihapus", http.StatusOK, "success", nil)
+	SuccessResponse(c, "Catatan Berhasil dihapus", http.StatusOK, "success", nil, nil)
 
 }
