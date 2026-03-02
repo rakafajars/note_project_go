@@ -66,3 +66,31 @@ func (h *NoteHandler) DeleteNote(c *gin.Context) {
 
 	SuccessResponse(c, "Catatan Berhasil dihapus", http.StatusOK, "success", nil, nil)
 }
+
+func (h *NoteHandler) UpdateNote(c *gin.Context) {
+	idParam := c.Param("id")
+	id, _ := strconv.Atoi(idParam)
+
+	var input struct {
+		Title   string `json:"title"`
+		Content string `json:"content"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		ErrorResponse(c, "input tidak valid", http.StatusBadRequest, "error", nil)
+		return
+	}
+
+	note, err := h.usecase.UpdateNote(uint(id), input.Title, input.Content)
+	if err != nil {
+		if err.Error() == "catatan tidak ditemukan" {
+			ErrorResponse(c, err.Error(), http.StatusNotFound, "error", nil)
+			return
+		}
+
+		ErrorResponse(c, "Gagal memperbarui catatan", http.StatusInternalServerError, "error", nil)
+		return
+	}
+
+	SuccessResponse(c, "Catatan Berhasil Diperbarui", http.StatusOK, "success", note, nil)
+}

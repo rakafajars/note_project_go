@@ -10,6 +10,7 @@ type NoteRepository interface {
 	Create(note *models.Note) error
 	GetAllNote() ([]models.Note, error)
 	Delete(id uint) error
+	Update(id uint, note *models.Note) error
 }
 
 type noteRepository struct {
@@ -42,6 +43,21 @@ func (r *noteRepository) Delete(id uint) error {
 	// Jika tidak ada baris yang terhapus (ID tidak ketemu)
 	if result.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound // Error bawaan GORM untuk "Data Tidak Ditemukan"
+	}
+
+	return nil
+}
+
+func (r *noteRepository) Update(id uint, note *models.Note) error {
+	// mencari data berdasarkan ID, lalu diperbaiki fieldnya
+	result := r.db.Model(&models.Note{}).Where("id = ?", id).Updates(note)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
 	}
 
 	return nil

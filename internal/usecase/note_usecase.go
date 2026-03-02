@@ -14,6 +14,7 @@ type NoteUsecase interface {
 	GetAllNotes() ([]models.Note, error)
 	CreateNote(title, content string) (*models.Note, error)
 	DeleteNote(id uint) error
+	UpdateNote(id uint, title, content string) (*models.Note, error)
 }
 
 type noteUsecase struct {
@@ -71,4 +72,27 @@ func (u *noteUsecase) DeleteNote(id uint) error {
 	}
 
 	return nil
+}
+
+func (u *noteUsecase) UpdateNote(id uint, title, content string) (*models.Note, error) {
+	if id == 0 {
+		return nil, errors.New("ID tidak valids")
+	}
+
+	note := &models.Note{
+		Title:     title,
+		Content:   content,
+		UpdatedAt: time.Now(),
+	}
+
+	err := u.repo.Update(id, note)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("catatan tidak ditemukan")
+		}
+
+		return nil, err
+	}
+
+	return note, nil
 }
