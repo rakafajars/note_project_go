@@ -6,8 +6,9 @@ import (
 	"notes-project/internal/repository"
 	"notes-project/internal/usecase"
 
-	_ "notes-project/docs"
+	_ "notes-project/docs" // Import library CORS
 
+	"github.com/gin-contrib/cors" // Import library CORS
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -31,6 +32,21 @@ func main() {
 	// 3. Setup Router (Gin)
 	r := gin.Default()
 
+	// 1. Logger & Recovery (Bawaan Gin)
+	// Logger: Mencatat setiap request di terminal
+	// Recovery: Mencegah server mati jika terjadi panic/error fatal
+	r.Use(gin.Logger())
+
+	r.Use(gin.Recovery())
+
+	// 2. custom cors middleware
+	// ini akan mengizinakn aplikasi
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
 	// Route untuk swagger UI
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
