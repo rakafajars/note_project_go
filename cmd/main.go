@@ -31,6 +31,10 @@ func main() {
 	noteUsecase := usecase.NewTodoUsecase(noteRepo)
 	noteHandler := delivery.NewNoteHandler(noteUsecase)
 
+	userRepo := repository.NewUserRepository(config.DB)
+	userUsecase := usecase.NewUserUsecase(userRepo)
+	userHandler := delivery.NewUserHandler(userUsecase)
+
 	// 3. Setup Router (Gin)
 	r := gin.Default()
 
@@ -59,6 +63,8 @@ func main() {
 		v1.GET("/notes", noteHandler.GetAllNotes)
 		v1.DELETE("/notes/:id", noteHandler.DeleteNote)
 		v1.PUT("/notes/:id", noteHandler.UpdateNote)
+
+		v1.POST("/register", userHandler.Register)
 	}
 
 	// 4. Jalankan Server
