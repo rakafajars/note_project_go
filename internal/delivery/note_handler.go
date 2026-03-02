@@ -6,7 +6,10 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
+
+var validate = validator.New()
 
 type NoteHandler struct {
 	usecase usecase.NoteUsecase
@@ -17,8 +20,8 @@ func NewNoteHandler(u usecase.NoteUsecase) *NoteHandler {
 }
 
 type NoteRequest struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	Title   string `json:"title" validate:"required,min=5,max=100"`
+	Content string `json:"content" validate:"required,min=5"`
 }
 
 // CreateNote godoc
@@ -37,6 +40,38 @@ func (h *NoteHandler) CreateNote(c *gin.Context) {
 	// Bind JSON dari body request ke struct input
 	if err := c.ShouldBindJSON(&input); err != nil {
 		ErrorResponse(c, "Validasi gagal", http.StatusBadRequest, "error", gin.H{"details": err.Error()})
+		return
+	}
+
+	// 3. jalankan validasi
+	if err := validate.Struct(input); err != nil {
+
+		report := []ValidationError{}
+		for _, err := range err.(validator.ValidationErrors) {
+			// ambil nama tag (misal: min)
+			tag := err.Tag()
+			// ambil parameter tag (misal: 5)
+			param := err.Param()
+
+			message := "Format " + err.Field() + " tidak sesuai"
+
+			// logika untuk mempercantik pesan
+			switch tag {
+			case "min":
+				message = err.Field() + " minimal" + param + " karakter"
+			case "required":
+				message = err.Field() + " wajib diisi"
+			case "max":
+				message = err.Field() + " maksimal " + param + " karakter"
+			}
+
+			report = append(report, ValidationError{
+				Field:   err.Field(),
+				Message: message,
+			})
+		}
+
+		ErrorResponse(c, "validasi gagal", http.StatusBadRequest, "error", report)
 		return
 	}
 
