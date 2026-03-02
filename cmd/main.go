@@ -2,6 +2,7 @@ package main
 
 import (
 	"notes-project/config"
+	appconfig "notes-project/internal/config"
 	"notes-project/internal/delivery"
 	"notes-project/internal/repository"
 	"notes-project/internal/usecase"
@@ -21,8 +22,9 @@ import (
 // @BasePath        /api/v1
 
 func main() {
+	cfg := appconfig.LoadConfig()
 	// 1. inisialisasi koneksi database
-	config.ConnectDatabase()
+	config.ConnectDatabase(cfg)
 
 	// 2. setup layers (Depedency Injection)
 	noteRepo := repository.NewNoteRepository(config.DB)

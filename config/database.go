@@ -2,8 +2,8 @@ package config
 
 import (
 	"fmt"
+	appconfig "notes-project/internal/config"
 	"notes-project/internal/models"
-	"os"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
@@ -12,7 +12,7 @@ import (
 
 var DB *gorm.DB
 
-func ConnectDatabase() {
+func ConnectDatabase(cfg *appconfig.Config) {
 	// load file .env
 	err := godotenv.Load()
 	if err != nil {
@@ -21,11 +21,11 @@ func ConnectDatabase() {
 
 	// ambil data dari .env
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"),
+		cfg.DBHost,
+		cfg.DBUser,
+		cfg.DBPassword,
+		cfg.DBName,
+		cfg.DBPort,
 	)
 
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})

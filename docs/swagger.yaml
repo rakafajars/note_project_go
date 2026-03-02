@@ -1,25 +1,144 @@
 basePath: /api/v1
 definitions:
+  delivery.CreateNoteSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/delivery.NoteExample'
+      message:
+        example: Catatan berhasil dibuat
+        type: string
+      status:
+        example: success
+        type: string
+      status_code:
+        example: 201
+        type: integer
+    type: object
+  delivery.DeleteNoteSuccessResponse:
+    properties:
+      message:
+        example: Catatan Berhasil dihapus
+        type: string
+      status:
+        example: success
+        type: string
+      status_code:
+        example: 200
+        type: integer
+    type: object
+  delivery.ErrorCommonResponse:
+    properties:
+      message:
+        example: Terjadi kesalahan
+        type: string
+      status:
+        example: error
+        type: string
+      status_code:
+        example: 500
+        type: integer
+    type: object
+  delivery.ErrorValidationResponse:
+    properties:
+      errors:
+        items:
+          $ref: '#/definitions/delivery.ValidationErrorDetail'
+        type: array
+      message:
+        example: validasi gagal
+        type: string
+      status:
+        example: error
+        type: string
+      status_code:
+        example: 400
+        type: integer
+    type: object
+  delivery.GetAllNotesSuccessResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/delivery.NoteExample'
+        type: array
+      message:
+        example: Berhasil mendapatkan catatan
+        type: string
+      meta:
+        $ref: '#/definitions/delivery.PaginationMeta'
+      status:
+        example: success
+        type: string
+      status_code:
+        example: 200
+        type: integer
+    type: object
+  delivery.NoteExample:
+    properties:
+      content:
+        example: Ini adalah isi catatan pertama saya
+        type: string
+      created_at:
+        example: "2026-03-03T01:00:00+07:00"
+        type: string
+      id:
+        example: 1
+        type: integer
+      title:
+        example: Catatan Pertama
+        type: string
+      updated_at:
+        example: "2026-03-03T01:00:00+07:00"
+        type: string
+    type: object
   delivery.NoteRequest:
     properties:
       content:
+        example: Ini adalah isi catatan pertama saya
+        minLength: 5
         type: string
       title:
+        example: Catatan Pertama
+        maxLength: 100
+        minLength: 5
         type: string
+    required:
+    - content
+    - title
     type: object
-  delivery.Response:
+  delivery.PaginationMeta:
     properties:
-      data: {}
-      errors:
-        description: Gunakan any agar lebih fleksibel
+      current_page:
+        example: 1
+        type: integer
+      limit:
+        example: 10
+        type: integer
+      total:
+        example: 25
+        type: integer
+    type: object
+  delivery.UpdateNoteSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/delivery.NoteExample'
       message:
+        example: Catatan Berhasil Diperbarui
         type: string
-      meta:
-        description: Tambahkan Meta di struct
       status:
+        example: success
         type: string
       status_code:
+        example: 200
         type: integer
+    type: object
+  delivery.ValidationErrorDetail:
+    properties:
+      field:
+        example: Title
+        type: string
+      message:
+        example: Title minimal 5 karakter
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -30,25 +149,39 @@ info:
 paths:
   /notes:
     get:
-      description: Mengambil semua data catatan dari database
+      description: Mengambil semua data catatan dari database dengan fitur pencarian
+        dan pagination
+      parameters:
+      - description: Kata kunci pencarian berdasarkan judul
+        in: query
+        name: q
+        type: string
+      - description: 'Nomor halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Jumlah data per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/delivery.GetAllNotesSuccessResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/delivery.ErrorCommonResponse'
       summary: Mendapatkan semua catatan
       tags:
       - notes
     post:
       consumes:
       - application/json
-      description: Menyimpan judul catatan ke database
+      description: Menyimpan judul dan konten catatan ke database
       parameters:
       - description: Note Data
         in: body
@@ -62,32 +195,42 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/delivery.CreateNoteSuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/delivery.ErrorValidationResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.ErrorCommonResponse'
       summary: Membuat catatan baru
       tags:
       - notes
   /notes/{id}:
     delete:
-      description: Menghapus data berdasarkan ID
+      description: Menghapus data catatan berdasarkan ID
       parameters:
       - description: Note ID
         in: path
         name: id
         required: true
         type: integer
+      produces:
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/delivery.DeleteNoteSuccessResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/delivery.ErrorCommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.ErrorCommonResponse'
       summary: Menghapus catatan
       tags:
       - notes
@@ -113,19 +256,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/delivery.UpdateNoteSuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/delivery.ErrorValidationResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/delivery.ErrorCommonResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/delivery.ErrorCommonResponse'
       summary: Memperbarui catatan
       tags:
       - notes

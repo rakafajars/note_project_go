@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/notes": {
             "get": {
-                "description": "Mengambil semua data catatan dari database",
+                "description": "Mengambil semua data catatan dari database dengan fitur pencarian dan pagination",
                 "produces": [
                     "application/json"
                 ],
@@ -25,23 +25,43 @@ const docTemplate = `{
                     "notes"
                 ],
                 "summary": "Mendapatkan semua catatan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Kata kunci pencarian berdasarkan judul",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Nomor halaman (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Jumlah data per halaman (default: 10)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.GetAllNotesSuccessResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.ErrorCommonResponse"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Menyimpan judul catatan ke database",
+                "description": "Menyimpan judul dan konten catatan ke database",
                 "consumes": [
                     "application/json"
                 ],
@@ -67,13 +87,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.CreateNoteSuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.ErrorValidationResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorCommonResponse"
                         }
                     }
                 }
@@ -114,31 +140,34 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.UpdateNoteSuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.ErrorValidationResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.ErrorCommonResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.ErrorCommonResponse"
                         }
                     }
                 }
             },
             "delete": {
-                "description": "Menghapus data berdasarkan ID",
+                "description": "Menghapus data catatan berdasarkan ID",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "notes"
                 ],
@@ -156,13 +185,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.DeleteNoteSuccessResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.ErrorCommonResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorCommonResponse"
                         }
                     }
                 }
@@ -170,35 +205,201 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "delivery.NoteRequest": {
+        "delivery.CreateNoteSuccessResponse": {
             "type": "object",
             "properties": {
-                "content": {
-                    "type": "string"
+                "data": {
+                    "$ref": "#/definitions/delivery.NoteExample"
                 },
-                "title": {
-                    "type": "string"
+                "message": {
+                    "type": "string",
+                    "example": "Catatan berhasil dibuat"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                },
+                "status_code": {
+                    "type": "integer",
+                    "example": 201
                 }
             }
         },
-        "delivery.Response": {
+        "delivery.DeleteNoteSuccessResponse": {
             "type": "object",
             "properties": {
-                "data": {},
-                "errors": {
-                    "description": "Gunakan any agar lebih fleksibel"
-                },
                 "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "description": "Tambahkan Meta di struct"
+                    "type": "string",
+                    "example": "Catatan Berhasil dihapus"
                 },
                 "status": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "success"
                 },
                 "status_code": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 200
+                }
+            }
+        },
+        "delivery.ErrorCommonResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Terjadi kesalahan"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "error"
+                },
+                "status_code": {
+                    "type": "integer",
+                    "example": 500
+                }
+            }
+        },
+        "delivery.ErrorValidationResponse": {
+            "type": "object",
+            "properties": {
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/delivery.ValidationErrorDetail"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "validasi gagal"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "error"
+                },
+                "status_code": {
+                    "type": "integer",
+                    "example": 400
+                }
+            }
+        },
+        "delivery.GetAllNotesSuccessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/delivery.NoteExample"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Berhasil mendapatkan catatan"
+                },
+                "meta": {
+                    "$ref": "#/definitions/delivery.PaginationMeta"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                },
+                "status_code": {
+                    "type": "integer",
+                    "example": 200
+                }
+            }
+        },
+        "delivery.NoteExample": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "Ini adalah isi catatan pertama saya"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-03-03T01:00:00+07:00"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Catatan Pertama"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-03-03T01:00:00+07:00"
+                }
+            }
+        },
+        "delivery.NoteRequest": {
+            "type": "object",
+            "required": [
+                "content",
+                "title"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "minLength": 5,
+                    "example": "Ini adalah isi catatan pertama saya"
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 5,
+                    "example": "Catatan Pertama"
+                }
+            }
+        },
+        "delivery.PaginationMeta": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 25
+                }
+            }
+        },
+        "delivery.UpdateNoteSuccessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/delivery.NoteExample"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Catatan Berhasil Diperbarui"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                },
+                "status_code": {
+                    "type": "integer",
+                    "example": 200
+                }
+            }
+        },
+        "delivery.ValidationErrorDetail": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string",
+                    "example": "Title"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Title minimal 5 karakter"
                 }
             }
         }
