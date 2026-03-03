@@ -107,6 +107,9 @@ type ErrorValidationResponse struct {
 func (h *NoteHandler) CreateNote(c *gin.Context) {
 	var input NoteRequest
 
+	val, _ := c.Get("user_id")
+	userID := val.(uint)
+
 	// Bind JSON dari body request ke struct input
 	if err := c.ShouldBindJSON(&input); err != nil {
 		ErrorResponse(c, "Validasi gagal", http.StatusBadRequest, "error", gin.H{"details": err.Error()})
@@ -145,7 +148,7 @@ func (h *NoteHandler) CreateNote(c *gin.Context) {
 		return
 	}
 
-	note, err := h.usecase.CreateNote(input.Title, input.Content)
+	note, err := h.usecase.CreateNote(input.Title, input.Content, userID)
 	if err != nil {
 		ErrorResponse(c, "Gagal membuat catatan", http.StatusInternalServerError, "error", gin.H{"details": err.Error()})
 		return
@@ -168,13 +171,15 @@ func (h *NoteHandler) CreateNote(c *gin.Context) {
 // @Router       /notes [get]
 func (h *NoteHandler) GetAllNotes(c *gin.Context) {
 	// ambil query params
+	val, _ := c.Get("user_id")
+	userID := val.(uint)
 
 	query := c.Query("q")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
 	// panggil use case
-	notes, total, err := h.usecase.GetAllNotes(query, page, limit)
+	notes, total, err := h.usecase.GetAllNotes(userID, query, page, limit)
 	if err != nil {
 		ErrorResponse(c, "Gagal memuat catatan", http.StatusInternalServerError, "error", gin.H{"details": err.Error()})
 		return
@@ -202,11 +207,14 @@ func (h *NoteHandler) GetAllNotes(c *gin.Context) {
 // @Failure      500  {object}  ErrorCommonResponse
 // @Router       /notes/{id} [delete]
 func (h *NoteHandler) DeleteNote(c *gin.Context) {
+
+	val, _ := c.Get("user_id")
+	userID := val.(uint)
 	// Mengambil ID dari URL parameter /notes/:id
 	idParam := c.Param("id")
 	id, _ := strconv.Atoi(idParam) // Convert string ke int
 
-	err := h.usecase.DeleteNote(uint(id))
+	err := h.usecase.DeleteNote(uint(id), userID)
 	if err != nil {
 		if err.Error() == "catatan tidak ditemukan" {
 			ErrorResponse(c, err.Error(), http.StatusNotFound, "error", nil)
@@ -233,6 +241,9 @@ func (h *NoteHandler) DeleteNote(c *gin.Context) {
 // @Failure      500  {object}  ErrorCommonResponse
 // @Router       /notes/{id} [put]
 func (h *NoteHandler) UpdateNote(c *gin.Context) {
+	val, _ := c.Get("user_id")
+	userID := val.(uint)
+
 	idParam := c.Param("id")
 	id, _ := strconv.Atoi(idParam)
 
@@ -243,7 +254,7 @@ func (h *NoteHandler) UpdateNote(c *gin.Context) {
 		return
 	}
 
-	note, err := h.usecase.UpdateNote(uint(id), input.Title, input.Content)
+	note, err := h.usecase.UpdateNote(uint(id), input.Title, input.Content, userID)
 	if err != nil {
 		if err.Error() == "catatan tidak ditemukan" {
 			ErrorResponse(c, err.Error(), http.StatusNotFound, "error", nil)

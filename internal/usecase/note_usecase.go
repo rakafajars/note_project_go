@@ -4,17 +4,16 @@ import (
 	"errors"
 	"notes-project/internal/models"
 	"notes-project/internal/repository"
-	"time"
 
 	"gorm.io/gorm"
 )
 
 // interface untuk kontrak logika bisnis
 type NoteUsecase interface {
-	GetAllNotes(query string, page, limit int) ([]models.Note, int64, error)
-	CreateNote(title, content string) (*models.Note, error)
-	DeleteNote(id uint) error
-	UpdateNote(id uint, title, content string) (*models.Note, error)
+	GetAllNotes(userID uint, query string, page, limit int) ([]models.Note, int64, error)
+	CreateNote(title, content string, userID uint) (*models.Note, error)
+	DeleteNote(id, userID uint) error
+	UpdateNote(id uint, title, content string, userID uint) (*models.Note, error)
 }
 
 type noteUsecase struct {
@@ -26,7 +25,7 @@ func NewTodoUsecase(r repository.NoteRepository) NoteUsecase {
 	return &noteUsecase{repo: r}
 }
 
-func (u *noteUsecase) CreateNote(title, content string) (*models.Note, error) {
+func (u *noteUsecase) CreateNote(title, content string, userID uint) (*models.Note, error) {
 	// contoh logika Bisnis: judul tidak boleh kosong
 	if title == "" {
 		return nil, errors.New("Judul tidak boleh kosong")
@@ -37,9 +36,9 @@ func (u *noteUsecase) CreateNote(title, content string) (*models.Note, error) {
 	}
 
 	note := &models.Note{
-		Title:     title,
-		Content:   content,
-		CreatedAt: time.Now(),
+		Title:   title,
+		Content: content,
+		UserID:  userID,
 	}
 
 	// Memanggil repository untuk simpan ke DB
@@ -51,7 +50,7 @@ func (u *noteUsecase) CreateNote(title, content string) (*models.Note, error) {
 	return note, nil
 }
 
-func (u *noteUsecase) GetAllNotes(query string, page, limit int) ([]models.Note, int64, error) {
+func (u *noteUsecase) GetAllNotes(userID uint, query string, page, limit int) ([]models.Note, int64, error) {
 	// default nilai jika tidak di isi
 	if page <= 0 {
 		page = 1
@@ -63,17 +62,17 @@ func (u *noteUsecase) GetAllNotes(query string, page, limit int) ([]models.Note,
 
 	offset := (page - 1) * limit
 
-	return u.repo.GetAll(query, limit, offset)
+	return u.repo.GetAll(userID, query, limit, offset)
 	// return u.repo.GetAll()
 }
 
-func (u *noteUsecase) DeleteNote(id uint) error {
+func (u *noteUsecase) DeleteNote(id, userID uint) error {
 	// Validasi Sederhana: Pastikan ID tidak nol
 	if id == 0 {
 		return errors.New("ID catatan tidak valid")
 	}
 
-	err := u.repo.Delete(id)
+	err := u.repo.Delete(id, userID)
 	if err != nil {
 		// jika errornya adalah recordnotFound, kita berikan pesan spesifik
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -86,18 +85,17 @@ func (u *noteUsecase) DeleteNote(id uint) error {
 	return nil
 }
 
-func (u *noteUsecase) UpdateNote(id uint, title, content string) (*models.Note, error) {
+func (u *noteUsecase) UpdateNote(id uint, title, content string, userID uint) (*models.Note, error) {
 	if id == 0 {
 		return nil, errors.New("ID tidak valids")
 	}
 
 	note := &models.Note{
-		Title:     title,
-		Content:   content,
-		UpdatedAt: time.Now(),
+		Title:   title,
+		Content: content,
 	}
 
-	err := u.repo.Update(id, note)
+	err := u.repo.Update(id, note, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("catatan tidak ditemukan")

@@ -32,7 +32,7 @@ func main() {
 	noteUsecase := usecase.NewTodoUsecase(noteRepo)
 	noteHandler := delivery.NewNoteHandler(noteUsecase)
 
-	config.DB.AutoMigrate(&models.User{})
+	config.DB.AutoMigrate(&models.User{}, &models.Note{})
 
 	userRepo := repository.NewUserRepository(config.DB)
 	userUsecase := usecase.NewUserUsecase(userRepo)

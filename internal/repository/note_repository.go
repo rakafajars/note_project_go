@@ -8,9 +8,9 @@ import (
 
 type NoteRepository interface {
 	Create(note *models.Note) error
-	GetAll(query string, limit, offset int) ([]models.Note, int64, error)
-	Delete(id uint) error
-	Update(id uint, note *models.Note) error
+	GetAll(userID uint, query string, limit, offset int) ([]models.Note, int64, error)
+	Delete(id uint, userID uint) error
+	Update(id uint, note *models.Note, userID uint) error
 }
 
 type noteRepository struct {
@@ -26,11 +26,12 @@ func (r *noteRepository) Create(note *models.Note) error {
 	return r.db.Create(note).Error
 }
 
-func (r *noteRepository) GetAll(query string, limit, offset int) ([]models.Note, int64, error) {
+func (r *noteRepository) GetAll(userID uint, query string, limit, offset int) ([]models.Note, int64, error) {
 	var notes []models.Note
 	var total int64
 
-	db := r.db.Model(&models.Note{})
+	// Filter berdasarkan userID milik si pengirim request
+	db := r.db.Model(&models.Note{}).Where("user_id = ?", userID)
 
 	if query != "" {
 		db = db.Where("title ILIKE ?", "%"+query+"%")
@@ -42,8 +43,8 @@ func (r *noteRepository) GetAll(query string, limit, offset int) ([]models.Note,
 	return notes, total, err
 }
 
-func (r *noteRepository) Delete(id uint) error {
-	result := r.db.Delete(&models.Note{}, id)
+func (r *noteRepository) Delete(id uint, userID uint) error {
+	result := r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&models.Note{}, id)
 
 	// Cek Jika terjadi error koneksi/query
 	if result.Error != nil {
@@ -58,9 +59,9 @@ func (r *noteRepository) Delete(id uint) error {
 	return nil
 }
 
-func (r *noteRepository) Update(id uint, note *models.Note) error {
+func (r *noteRepository) Update(id uint, note *models.Note, userID uint) error {
 	// mencari data berdasarkan ID, lalu diperbaiki fieldnya
-	result := r.db.Model(&models.Note{}).Where("id = ?", id).Updates(note)
+	result := r.db.Model(&models.Note{}).Where("id = ? AND user_id = ?", id, userID).Updates(note)
 
 	if result.Error != nil {
 		return result.Error

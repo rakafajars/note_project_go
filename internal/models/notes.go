@@ -1,11 +1,14 @@
 package models
 
-import "time"
+import (
+	"gorm.io/gorm"
+)
 
 type Note struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	Title     string    `gorm:"type:varchar(100);not null" json:"title"`
-	Content   string    `gorm:"type:text" json:"content"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	gorm.Model        // Pakai ini agar otomatis punya ID, CreatedAt, UpdatedAt, DeletedAt
+	Title      string `gorm:"type:varchar(100);not null" json:"title"`
+	Content    string `gorm:"type:text" json:"content"`
+	UserID     uint   `gorm:"not null;index" json:"user_id"`
+
+	User User `gorm:"foreignKey:UserID" json:"-"`
 }
