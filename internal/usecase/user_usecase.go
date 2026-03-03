@@ -1,13 +1,17 @@
 package usecase
 
 import (
+	"errors"
 	"notes-project/internal/models"
 	"notes-project/internal/repository"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserUsecase interface {
+	Login(email, password, secretKey string) (string, error)
 	Register(email, password string) (*models.User, error)
 }
 
@@ -41,4 +45,29 @@ func (u *userUsecase) Register(email, password string) (*models.User, error) {
 	}
 
 	return user, nil
+}
+
+func (u *userUsecase) Login(email, password, secretKey string) (string, error) {
+	// cari user di database
+	user, err := u.repo.FindByEmail(email)
+	if err != nil {
+		return "", errors.New("Email atau Password salah")
+	}
+
+	// 2. Bandingkan password bcrypt
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+
+	if err != nil {
+		return "", errors.New("Email atau Password salah")
+	}
+
+	// 3. Buat JWT Token
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(secretKey))
+	return tokenString, err
 }

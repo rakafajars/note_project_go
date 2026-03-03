@@ -68,6 +68,10 @@ func main() {
 		v1.PUT("/notes/:id", noteHandler.UpdateNote)
 
 		v1.POST("/register", userHandler.Register)
+
+		v1.POST("/login", func(c *gin.Context) {
+			userHandler.Login(c, cfg.JWTSecret)
+		})
 	}
 
 	// 4. Jalankan Server
