@@ -34,3 +34,21 @@ Daftar package dan dependency yang diinstall di project ini:
    ```bash
    go get github.com/go-playground/validator/v10
    ```
+
+6. **CORS (Cross-Origin Resource Sharing)**
+
+   ```bash
+   go get github.com/gin-contrib/cors
+   ```
+
+7. **JWT (JSON Web Token untuk Autentikasi)**
+
+   ```bash
+   go get github.com/golang-jwt/jwt/v5
+   ```
+
+8. **Bcrypt (Hashing Password)**
+
+   ```bash
+   go get golang.org/x/crypto
+   ```

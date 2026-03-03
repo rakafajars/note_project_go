@@ -4,6 +4,7 @@ import (
 	"notes-project/config"
 	appconfig "notes-project/internal/config"
 	"notes-project/internal/delivery"
+	"notes-project/internal/models"
 	"notes-project/internal/repository"
 	"notes-project/internal/usecase"
 
@@ -30,6 +31,8 @@ func main() {
 	noteRepo := repository.NewNoteRepository(config.DB)
 	noteUsecase := usecase.NewTodoUsecase(noteRepo)
 	noteHandler := delivery.NewNoteHandler(noteUsecase)
+
+	config.DB.AutoMigrate(&models.User{})
 
 	userRepo := repository.NewUserRepository(config.DB)
 	userUsecase := usecase.NewUserUsecase(userRepo)

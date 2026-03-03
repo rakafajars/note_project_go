@@ -14,6 +14,8 @@ require (
 
 require github.com/gin-contrib/cors v1.7.6
 
+require github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
+
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
