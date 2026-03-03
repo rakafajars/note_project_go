@@ -62,16 +62,22 @@ func main() {
 	// Routes
 	v1 := r.Group("/api/v1")
 	{
-		v1.POST("/notes", noteHandler.CreateNote)
-		v1.GET("/notes", noteHandler.GetAllNotes)
-		v1.DELETE("/notes/:id", noteHandler.DeleteNote)
-		v1.PUT("/notes/:id", noteHandler.UpdateNote)
 
 		v1.POST("/register", userHandler.Register)
 
 		v1.POST("/login", func(c *gin.Context) {
 			userHandler.Login(c, cfg.JWTSecret)
 		})
+
+		notes := v1.Group("/notes")
+		notes.Use(delivery.AuthMiddleware(cfg.JWTSecret))
+		{
+			notes.POST("", noteHandler.CreateNote)
+			notes.GET("", noteHandler.GetAllNotes)
+			notes.DELETE("/:id", noteHandler.DeleteNote)
+			notes.PUT("/:id", noteHandler.UpdateNote)
+		}
+
 	}
 
 	// 4. Jalankan Server
