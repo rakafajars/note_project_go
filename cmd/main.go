@@ -1,12 +1,19 @@
 package main
 
 import (
+	"context"
+	"log"
+	"net/http"
 	"notes-project/config"
 	appconfig "notes-project/internal/config"
 	"notes-project/internal/delivery"
 	"notes-project/internal/models"
 	"notes-project/internal/repository"
 	"notes-project/internal/usecase"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	_ "notes-project/docs" // Import library CORS
 
@@ -80,6 +87,39 @@ func main() {
 
 	}
 
-	// 4. Jalankan Server
-	r.Run(":8080")
+	// 1. Definisikan konfigurasi HTTP Server secara manual
+	srv := &http.Server{
+		Addr:    ":" + cfg.Port,
+		Handler: r,
+	}
+
+	// 2. Jalankan server di dalam goroutine (jalur terpisah)
+	// Ini agar program tidak berhenti di sini dan bisa lanjut ke baris berikutnya
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Gagal menjalankan server: %s\n", err)
+		}
+	}()
+
+	// 3. Tunggu sinyal interupsi untuk mematikan server secara halus
+	// quit adalah channel yang akan menerima sinyal dari Sistem Operasi (seperti Ctrl+C)
+	quit := make(chan os.Signal, 1)
+
+	// SIGINT: sinyal dari Ctrl+C
+	// SIGTERM: sinyal stop standar dari sistem (misal saat deploy)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	<-quit
+	log.Println("Mematikan server secara halus...")
+
+	// 4. Berikan batas waktu (timeout) 5 detik untuk menyelesaikan request yang tersisa
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server dimatikan paksa:", err)
+	}
+
+	log.Println("Server berhasil berhenti dengan aman")
+
 }
